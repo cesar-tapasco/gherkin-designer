@@ -57,7 +57,8 @@ fi
 # Create virtual environment and install dependencies
 echo "📥 Installing dependencies..."
 UV_VENV_CLEAR=1 uv venv
-source .venv/bin/activate
+# source .venv/bin/activate
+export PATH="$PWD/.venv/bin:$PATH"
 uv pip install -r requirements.txt
 
 # Install playwright browsers
