@@ -248,7 +248,7 @@ scenarios('scenario.feature')
   return feature_dir
 
 
-@app.get("/")
+@app.get("/designer")
 def index():
   index_file = FRONTEND_DIR / "index.html"
   if index_file.exists():
@@ -532,6 +532,12 @@ async def ws_logs(ws: WebSocket, run_id: Optional[str] = None):
     rc = await process.wait()
     await ws.send_text(f"\n=== pytest exited with code {rc} ===\n")
     await ws.close()
+
+
+# Mount the report directory for serving CSS, JS, and other static assets
+report_dir = WORKSPACE_DIR / ".temp" / "report-sm"
+if report_dir.exists():
+  app.mount("/", StaticFiles(directory=str(report_dir), html=True), name="report")
 
 
 # Serve static assets for the SPA

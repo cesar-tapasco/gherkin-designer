@@ -770,7 +770,7 @@
       </select>
       <button class="btn secondary" id="formatBtn" title="Format Gherkin">Format</button>
       <button class="btn" id="runBtn">Run</button>
-      <button class="btn secondary" id="reportBtn" title="Start/Stop Report Server">Report Server</button>
+      <button class="btn secondary" id="reportBtn" title="Start/Stop Report Process">Report Server</button>
       <button class="theme-toggle" id="themeToggle" title="Toggle theme">
         <span id="themeIcon">🌙</span>
       </button>
@@ -1910,12 +1910,19 @@
       let reportServerRunning = false;
 
       // Check initial report server status
+      let previousReportServerStatus = false;
       async function checkReportServerStatus() {
         try {
           const res = await fetch('/api/report/status');
           const data = await res.json();
+          const wasRunning = reportServerRunning;
           reportServerRunning = data.running;
           updateReportButton();
+
+          // If server was running and now it stopped, open the report tab
+          if (wasRunning && !reportServerRunning) {
+            window.open("http://"+location.host+"/", '_blank');
+          }
         } catch (err) {
           console.error('Failed to check report server status:', err);
         }
@@ -1924,7 +1931,7 @@
       // Update report button appearance
       function updateReportButton() {
         if (reportServerRunning) {
-          reportBtn.textContent = 'Stop Report Server';
+          reportBtn.textContent = 'Stop Report Process';
           reportBtn.classList.remove('secondary');
           reportBtn.classList.add('btn');
           reportStatus.style.display = 'inline-block';
@@ -1932,14 +1939,14 @@
           reportStatus.style.background = 'var(--status-ok)';
           reportStatus.style.color = 'white';
         } else {
-          reportBtn.textContent = 'Start Report Server';
+          reportBtn.textContent = 'Create Report';
           reportBtn.classList.add('secondary');
           reportBtn.classList.remove('btn');
           reportStatus.style.display = 'none';
         }
       }
 
-      // Start report server
+      // Create Report
       async function startReportServer() {
         try {
           reportBtn.disabled = true;
@@ -1951,17 +1958,17 @@
             updateReportButton();
             appendLog('\n=== Report server started ===\n');
           } else {
-            appendLog(`\n=== Failed to start report server: ${data.message} ===\n`);
+            appendLog(`\n=== Failed to Create Report: ${data.message} ===\n`);
           }
         } catch (err) {
-          console.error('Failed to start report server:', err);
+          console.error('Failed to Create Report:', err);
           appendLog(`\n=== Error starting report server: ${err.message} ===\n`);
         } finally {
           reportBtn.disabled = false;
         }
       }
 
-      // Stop report server
+      // Stop report Process
       async function stopReportServer() {
         try {
           reportBtn.disabled = true;
@@ -1973,10 +1980,10 @@
             updateReportButton();
             appendLog('\n=== Report server stopped ===\n');
           } else {
-            appendLog(`\n=== Failed to stop report server: ${data.message} ===\n`);
+            appendLog(`\n=== Failed to stop report Process: ${data.message} ===\n`);
           }
         } catch (err) {
-          console.error('Failed to stop report server:', err);
+          console.error('Failed to stop report Process:', err);
           appendLog(`\n=== Error stopping report server: ${err.message} ===\n`);
         } finally {
           reportBtn.disabled = false;
@@ -1986,7 +1993,13 @@
       // Report button click handler
       reportBtn.addEventListener('click', async () => {
         if (reportServerRunning) {
+          // Stop the server, wait for it to complete, then restart
           await stopReportServer();
+          await startReportServer();
+          // Open tab only after the full cycle is complete and server is running again
+          if (reportServerRunning) {
+            window.open("http://"+location.host+"/", '_blank');
+          }
         } else {
           await startReportServer();
         }

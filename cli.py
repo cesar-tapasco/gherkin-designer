@@ -89,7 +89,7 @@ def start_web_runner(
 ):
   """Start the Gherkin Web Runner FastAPI application."""
   try:
-    typer.echo(f"Starting Gherkin Web Runner on http://localhost:{port}")
+    typer.echo(f"Starting Gherkin Web Runner on http://localhost:{port}/designer")
 
     # Open browser in background thread if requested
     if not no_browser:
@@ -97,7 +97,7 @@ def start_web_runner(
       def open_browser():
         time.sleep(1)  # Give server time to start
         try:
-          webbrowser.open(f"http://localhost:{port}")
+          webbrowser.open(f"http://localhost:{port}/designer")
         except Exception:
           pass  # Silently fail if browser can't be opened
 

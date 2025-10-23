@@ -11,3 +11,4 @@ venv
 *.sqlite3
 *.pyc
 *.pyo
+report.pdf
