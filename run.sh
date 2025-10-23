@@ -72,6 +72,8 @@ echo ""
 echo "🚀 Starting Gherkin Designer..."
 echo ""
 
+echo "Symbolic link to python34"
 # Start the web runner
-uv pip install typer
-$PWD/.venv/bin/python cli.py start-web-runner --port 9000
+!ln -s $PWD/.venv/bin/python python34
+./python34 --version
+./python34 cli.py start-web-runner --port 9000
