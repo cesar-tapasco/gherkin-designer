@@ -10,7 +10,7 @@ fi
 
 # Create virtual environment and install dependencies
 echo "📥 Installing dependencies..."
-UV_VENV_CLEAR=1 uv venv
+UV_VENV_CLEAR=1 uv venv --python 3.12.12
 
 
 # Extract the ZIP file into a subdirectory
@@ -86,7 +86,7 @@ else:
 
 ' > extract_and_navigate.py
 
-uv run python extract_and_navigate.py
+uv run extract_and_navigate.py
 
 export PATH="$PWD/.venv/bin:$PATH"
 uv pip install -r requirements.txt
@@ -103,4 +103,4 @@ echo ""
 echo "🚀 Starting Gherkin Designer..."
 echo ""
 
-uv run cli.py start-web-runner --port 9000
+uv run --python 3.12.12 cli.py start-web-runner --port 9000
