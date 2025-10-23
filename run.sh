@@ -43,6 +43,10 @@ mkdir -p "$INSTALL_DIR"
 find . -maxdepth 1 ! -name "." ! -name "__MACOSX" -exec cp -r {} "$INSTALL_DIR/" \;
 cd "$INSTALL_DIR"
 
+rm -rf $INSTALL_DIR/.temp
+mkdir $INSTALL_DIR/.temp;mkdir $INSTALL_DIR/.temp/report-sm
+echo "<html><head><title>Gherkin Designer Reports</title></head><body><h1>Gherkin Designer Reports</h1><p>Place your reports here.</p></body></html>" > $INSTALL_DIR/.temp/report-sm/index.html
+
 # Clean up temporary files
 echo "🧹 Cleaning up..."
 rm -rf "$DOWNLOAD_DIR"
