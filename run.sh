@@ -10,7 +10,7 @@ fi
 
 # Create virtual environment and install dependencies
 echo "📥 Installing dependencies..."
-UV_VENV_CLEAR=1 uv venv --python 3.12.12
+UV_VENV_CLEAR=1 uv venv
 
 
 # Extract the ZIP file into a subdirectory
@@ -103,4 +103,4 @@ echo ""
 echo "🚀 Starting Gherkin Designer..."
 echo ""
 
-uv run --python 3.12.12 cli.py start-web-runner --port 9000
+uv run cli.py start-web-runner --port 9000
