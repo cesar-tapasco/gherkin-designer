@@ -10,11 +10,11 @@ echo "🚀 Gherkin Designer Installer"
 echo ""
 
 # Check if unzip is installed
-if ! command -v unzip &> /dev/null; then
-    echo "❌ Error: unzip is not installed"
-    echo "Please install unzip and try again"
-    exit 1
-fi
+# if ! command -v unzip &> /dev/null; then
+#     echo "❌ Error: unzip is not installed"
+#     echo "Please install unzip and try again"
+#     exit 1
+# fi
 
 # Create temporary download directory
 echo "📁 Creating temporary directory..."
