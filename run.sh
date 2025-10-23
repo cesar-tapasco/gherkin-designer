@@ -9,13 +9,6 @@ INSTALL_DIR="$HOME/gherkin-designer"
 echo "🚀 Gherkin Designer Installer"
 echo ""
 
-# Check if unzip is installed
-# if ! command -v unzip &> /dev/null; then
-#     echo "❌ Error: unzip is not installed"
-#     echo "Please install unzip and try again"
-#     exit 1
-# fi
-
 # Create temporary download directory
 echo "📁 Creating temporary directory..."
 mkdir -p "$DOWNLOAD_DIR"
