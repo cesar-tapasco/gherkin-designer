@@ -1,7 +1,56 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Installing Gherkin Designer..."
+# Configuration
+REPO_URL="https://github.com/cesar-tapasco/gherkin-designer/releases/download/1.0/gherkin-designer.zip"
+DOWNLOAD_DIR="/tmp/gherkin-designer-download"
+INSTALL_DIR="$HOME/gherkin-designer"
+
+echo "🚀 Gherkin Designer Installer"
+echo ""
+
+# Check if unzip is installed
+if ! command -v unzip &> /dev/null; then
+    echo "❌ Error: unzip is not installed"
+    echo "Please install unzip and try again"
+    exit 1
+fi
+
+# Create temporary download directory
+echo "📁 Creating temporary directory..."
+mkdir -p "$DOWNLOAD_DIR"
+cd "$DOWNLOAD_DIR"
+
+# Download the ZIP file
+echo "📥 Downloading Gherkin Designer..."
+if curl -LsSf "$REPO_URL" -o gherkin-designer.zip; then
+    echo "✅ Download successful"
+else
+    echo "❌ Failed to download. Please check your internet connection"
+    exit 1
+fi
+
+# Extract the ZIP file
+echo "📦 Extracting files..."
+unzip -q gherkin-designer.zip
+
+# Find the extracted directory (usually repo-name-branch)
+EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "gherkin-designer-*" | head -n 1)
+
+if [ -z "$EXTRACTED_DIR" ]; then
+    echo "❌ Failed to find extracted directory"
+    exit 1
+fi
+
+# Move to installation directory
+echo "📂 Installing to $INSTALL_DIR..."
+mkdir -p "$INSTALL_DIR"
+cp -r "$EXTRACTED_DIR"/* "$INSTALL_DIR/"
+cd "$INSTALL_DIR"
+
+# Clean up temporary files
+echo "🧹 Cleaning up..."
+rm -rf "$DOWNLOAD_DIR"
 
 # Check if uv is installed
 if ! command -v uv &> /dev/null; then
@@ -20,20 +69,11 @@ uv pip install -r requirements.txt
 echo "🌐 Installing Playwright browsers..."
 playwright install
 
+echo ""
 echo "✅ Installation complete!"
 echo ""
-echo "Starting Gherkin Designer..."
+echo "🚀 Starting Gherkin Designer..."
 echo ""
 
-# Check if virtual environment exists
-if [ ! -d ".venv" ]; then
-    echo "❌ Virtual environment not found. Please run ./install.sh first"
-    exit 1
-fi
-
-# Activate virtual environment
-source .venv/bin/activate
-
 # Start the web runner
-echo "🚀 Starting Gherkin Designer..."
 python cli.py start-web-runner --port 9000
