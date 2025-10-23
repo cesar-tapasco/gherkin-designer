@@ -5,6 +5,11 @@ import os
 
 def create_json_file(folder_path, output_file):
   json_files_info = []
+
+  # Ensure the output directory exists
+  output_dir = os.path.dirname(output_file)
+  os.makedirs(output_dir, exist_ok=True)
+
   # Check if folder exists before listing
   if not os.path.exists(folder_path):
     print(f"Warning: Folder '{folder_path}' does not exist. Creating empty tests.json")
