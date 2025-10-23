@@ -103,5 +103,4 @@ echo ""
 echo "🚀 Starting Gherkin Designer..."
 echo ""
 
-uv run python --version
-uv run python cli.py start-web-runner --port 9000
+uv run cli.py start-web-runner --port 9000
