@@ -74,6 +74,6 @@ echo ""
 
 echo "Symbolic link to python34"
 # Start the web runner
-ln -s $PWD/.venv/bin/python python34
-./python34 --version
-./python34 cli.py start-web-runner --port 9000
+# ln -s $PWD/.venv/bin/python python34
+# ./python34 --version
+uv run python cli.py start-web-runner --port 9000
