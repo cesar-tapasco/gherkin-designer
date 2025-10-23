@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gherkin Web Runner</title>
+    <style>
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f6f8fa;
+        --bg-tertiary: #ffffff;
+        --border-primary: #d0d7de;
+        --border-secondary: #d8dee4;
+        --text-primary: #1f2328;
+        --text-secondary: #636c76;
+        --text-tertiary: #8c959f;
+        --accent-primary: #0969da;
+        --accent-hover: #0860ca;
+        --code-bg: #f6f8fa;
+        --shadow: rgba(31, 35, 40, 0.04);
+
+        /* Method colors - light */
+        --method-get-bg: #ddf4ff;
+        --method-get-text: #0969da;
+        --method-post-bg: #dafbe1;
+        --method-post-text: #1a7f37;
+        --method-put-bg: #fff8c5;
+        --method-put-text: #9a6700;
+        --method-delete-bg: #ffebe9;
+        --method-delete-text: #cf222e;
+        --status-ok: #1a7f37;
+        --status-bad: #cf222e;
+      }
+
+      :root[data-theme="dark"] {
+        --bg-primary: #0d1117;
+        --bg-secondary: #161b22;
+        --bg-tertiary: #0d1117;
+        --border-primary: #30363d;
+        --border-secondary: #21262d;
+        --text-primary: #e6edf3;
+        --text-secondary: #8d96a0;
+        --text-tertiary: #636c76;
+        --accent-primary: #2f81f7;
+        --accent-hover: #409eff;
+        --code-bg: #161b22;
+        --shadow: rgba(1, 4, 9, 0.3);
+
+        /* Method colors - dark */
+        --method-get-bg: #0d419d;
+        --method-get-text: #79c0ff;
+        --method-post-bg: #0f5323;
+        --method-post-text: #7ee787;
+        --method-put-bg: #5c3c00;
+        --method-put-text: #f0c955;
+        --method-delete-bg: #82071e;
+        --method-delete-text: #ffa198;
+        --status-ok: #7ee787;
+        --status-bad: #ffa198;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg-primary: #0d1117;
+          --bg-secondary: #161b22;
+          --bg-tertiary: #0d1117;
+          --border-primary: #30363d;
+          --border-secondary: #21262d;
+          --text-primary: #e6edf3;
+          --text-secondary: #8d96a0;
+          --text-tertiary: #636c76;
+          --accent-primary: #2f81f7;
+          --accent-hover: #409eff;
+          --code-bg: #161b22;
+          --shadow: rgba(1, 4, 9, 0.3);
+
+          /* Method colors - dark */
+          --method-get-bg: #0d419d;
+          --method-get-text: #79c0ff;
+          --method-post-bg: #0f5323;
+          --method-post-text: #7ee787;
+          --method-put-bg: #5c3c00;
+          --method-put-text: #f0c955;
+          --method-delete-bg: #82071e;
+          --method-delete-text: #ffa198;
+          --status-ok: #7ee787;
+          --status-bad: #ffa198;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+        margin: 0;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.5;
+      }
+      header {
+        padding: 12px 20px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      header h1 {
+        font-size: 14px;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+      }
+      .btn {
+        background: var(--accent-primary);
+        border: none;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 13px;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--accent-hover); }
+      .btn.secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+      }
+      .btn.secondary:hover { background: var(--bg-secondary); }
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 480px;
+        gap: 0;
+        height: calc(100vh - 49px);
+      }
+      .pane {
+        background: var(--bg-tertiary);
+        border-right: 1px solid var(--border-primary);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .pane:last-child { border-right: none; }
+      #editor {
+        flex: 1;
+        min-height: 200px;
+      }
+      .section {
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        border-bottom: 1px solid var(--border-primary);
+      }
+      #logs {
+        flex: 1;
+        font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        color: var(--text-primary);
+        padding: 12px 16px;
+        white-space: pre-wrap;
+        overflow: auto;
+        background: var(--code-bg);
+      }
+      #net { flex: 1; overflow-y: auto; min-height: 0; }
+      .tabs {
+        display: flex;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-primary);
+        padding: 0 12px;
+      }
+      .tab {
+        padding: 10px 16px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+        font-weight: 500;
+      }
+      .tab:hover { color: var(--text-primary); }
+      .tab.active {
+        color: var(--accent-primary);
+        border-bottom-color: var(--accent-primary);
+      }
+      .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+      .tab-content.active { display: flex; }
+      .network-split { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+      .net-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border-secondary);
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .net-item:hover { background: var(--bg-secondary); }
+      .method {
+        font-weight: 600;
+        width: 56px;
+        text-align: center;
+        border-radius: 4px;
+        padding: 3px 8px;
+        font-size: 11px;
+      }
+      .method.GET { background: var(--method-get-bg); color: var(--method-get-text); }
+      .method.POST { background: var(--method-post-bg); color: var(--method-post-text); }
+      .method.PUT, .method.PATCH { background: var(--method-put-bg); color: var(--method-put-text); }
+      .method.DELETE { background: var(--method-delete-bg); color: var(--method-delete-text); }
+      .url {
+        flex: 1;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+      }
+      .status.ok { color: var(--status-ok); font-weight: 600; }
+      .status.bad { color: var(--status-bad); font-weight: 600; }
+      #details {
+        flex: 1;
+        padding: 0;
+        border-top: 1px solid var(--border-primary);
+        font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        color: var(--text-primary);
+        overflow-y: auto;
+        background: var(--code-bg);
+        min-height: 0;
+      }
+      .detail-section {
+        border-bottom: 1px solid var(--border-secondary);
+      }
+      .detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--bg-secondary);
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.1s;
+      }
+      .detail-header:hover {
+        background: var(--bg-primary);
+      }
+      .detail-header-title {
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+      }
+      .detail-header-badge {
+        background: var(--accent-primary);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .detail-collapse-icon {
+        color: var(--text-tertiary);
+        font-size: 10px;
+        transition: transform 0.2s;
+      }
+      .detail-collapse-icon.collapsed {
+        transform: rotate(-90deg);
+      }
+      .detail-content {
+        padding: 12px 16px;
+        background: var(--code-bg);
+        display: none;
+      }
+      .detail-content.expanded {
+        display: block;
+      }
+      .detail-row {
+        display: flex;
+        margin-bottom: 8px;
+        gap: 8px;
+      }
+      .detail-label {
+        color: var(--text-secondary);
+        min-width: 100px;
+        font-weight: 500;
+      }
+      .detail-value {
+        color: var(--text-primary);
+        word-break: break-all;
+      }
+      .json-block {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 8px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .json-key {
+        color: #0969da;
+      }
+      :root[data-theme="dark"] .json-key {
+        color: #79c0ff;
+      }
+      .json-string {
+        color: #1a7f37;
+      }
+      :root[data-theme="dark"] .json-string {
+        color: #7ee787;
+      }
+      .json-number {
+        color: #953800;
+      }
+      :root[data-theme="dark"] .json-number {
+        color: #ffa657;
+      }
+      .json-boolean,
+      .json-null {
+        color: #cf222e;
+      }
+      :root[data-theme="dark"] .json-boolean,
+      :root[data-theme="dark"] .json-null {
+        color: #ff7b72;
+      }
+      .curl-command {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 8px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 11px;
+        line-height: 1.6;
+        position: relative;
+      }
+      .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+      .copy-btn:hover {
+        opacity: 1;
+      }
+      .row { display: flex; gap: 8px; align-items: center; }
+      input[type="text"] {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+        padding: 6px 10px;
+        border-radius: 6px;
+        flex: 1;
+        font-size: 13px;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+      }
+      .badge {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--border-primary);
+      }
+      .curl-item { border-top: 1px solid var(--border-primary); padding: 10px 12px; }
+      .curl-item pre { margin: 0; white-space: pre-wrap; }
+      .theme-toggle {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        color: var(--text-primary);
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 32px;
+      }
+      .theme-toggle:hover { background: var(--bg-secondary); }
+      select {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
+        padding: 6px 28px 6px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="grey" d="M6 9L1 4h10z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+      }
+      select:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+      }
+      select option {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .sample-info {
+        font-size: 12px;
+        color: var(--text-secondary);
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--border-primary);
+        font-style: italic;
+      }
+
+      /* Editor tabs */
+      .editor-tabs {
+        display: flex;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-primary);
+        overflow-x: auto;
+        padding: 0 8px;
+        gap: 4px;
+        align-items: center;
+        min-height: 38px;
+      }
+      .editor-tab {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+        white-space: nowrap;
+        user-select: none;
+        background: var(--bg-secondary);
+        border-radius: 6px 6px 0 0;
+        margin-top: 4px;
+      }
+      .editor-tab:hover {
+        color: var(--text-primary);
+        background: var(--bg-primary);
+      }
+      .editor-tab.active {
+        color: var(--accent-primary);
+        background: var(--bg-primary);
+        border-bottom-color: var(--accent-primary);
+        font-weight: 500;
+      }
+      .editor-tab-name {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 3px;
+        transition: background 0.15s;
+      }
+      .editor-tab-name:hover {
+        background: var(--bg-tertiary);
+        text-decoration: underline;
+        text-decoration-style: dotted;
+      }
+      .editor-tab-name.editing {
+        border: 1px solid var(--accent-primary);
+        border-radius: 3px;
+        padding: 2px 4px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        outline: none;
+        min-width: 80px;
+        max-width: 200px;
+      }
+      .editor-tab-close {
+        opacity: 0.5;
+        transition: opacity 0.15s;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0 2px;
+      }
+      .editor-tab-close:hover {
+        opacity: 1;
+        color: var(--status-bad);
+      }
+      .editor-tab-add {
+        padding: 4px 10px;
+        font-size: 16px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.15s;
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        margin-top: 4px;
+      }
+      .editor-tab-add:hover {
+        color: var(--text-primary);
+        background: var(--bg-primary);
+      }
+
+      /* Ace Editor Gherkin syntax highlighting improvements */
+      /* Force normal font style for all editor content */
+      .ace_editor,
+      .ace_editor * {
+        font-style: normal !important;
+      }
+      .ace_scroller,
+      .ace_content,
+      .ace_layer,
+      .ace_line,
+      .ace_line * {
+        font-style: normal !important;
+      }
+      :root:not([data-theme="dark"]) .ace_keyword,
+      :root:not([data-theme="dark"]) .ace_gherkin_keyword {
+        color: #cf222e !important;
+        font-weight: 600 !important;
+        font-style: normal !important;
+      }
+      :root:not([data-theme="dark"]) .ace_string,
+      :root:not([data-theme="dark"]) .ace_gherkin_scenario {
+        color: #0969da !important;
+        font-weight: 500 !important;
+        font-style: normal !important;
+      }
+      :root:not([data-theme="dark"]) .ace_comment {
+        color: #6e7781 !important;
+        font-style: italic !important;  /* Only comments should be italic */
+      }
+      /* Override any Gherkin-specific italic styles */
+      :root:not([data-theme="dark"]) .ace_gherkin,
+      :root:not([data-theme="dark"]) .ace_meta.ace_tag.ace_gherkin {
+        font-style: normal !important;
+      }
+      :root:not([data-theme="dark"]) .ace_variable {
+        color: #953800 !important;
+        font-style: normal !important;
+      }
+      :root:not([data-theme="dark"]) .ace_text,
+      :root:not([data-theme="dark"]) .ace_identifier {
+        font-style: normal !important;
+      }
+
+      /* Dark mode overrides */
+      :root[data-theme="dark"] .ace_keyword,
+      :root[data-theme="dark"] .ace_gherkin_keyword {
+        color: #ff7b72 !important;
+        font-weight: 600 !important;
+        font-style: normal !important;
+      }
+      :root[data-theme="dark"] .ace_string,
+      :root[data-theme="dark"] .ace_gherkin_scenario {
+        color: #79c0ff !important;
+        font-weight: 500 !important;
+        font-style: normal !important;
+      }
+      :root[data-theme="dark"] .ace_comment {
+        color: #8b949e !important;
+        font-style: italic !important;  /* Only comments should be italic */
+      }
+      /* Override any Gherkin-specific italic styles */
+      :root[data-theme="dark"] .ace_gherkin,
+      :root[data-theme="dark"] .ace_meta.ace_tag.ace_gherkin {
+        font-style: normal !important;
+      }
+      :root[data-theme="dark"] .ace_variable {
+        color: #ffa657 !important;
+        font-style: normal !important;
+      }
+      :root[data-theme="dark"] .ace_text,
+      :root[data-theme="dark"] .ace_identifier {
+        font-style: normal !important;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) .ace_keyword,
+        :root:not([data-theme="light"]) .ace_gherkin_keyword {
+          color: #ff7b72 !important;
+          font-weight: 600 !important;
+          font-style: normal !important;
+        }
+        :root:not([data-theme="light"]) .ace_string,
+        :root:not([data-theme="light"]) .ace_gherkin_scenario {
+          color: #79c0ff !important;
+          font-weight: 500 !important;
+          font-style: normal !important;
+        }
+        :root:not([data-theme="light"]) .ace_comment {
+          color: #8b949e !important;
+          font-style: italic !important;  /* Only comments should be italic */
+        }
+        /* Override any Gherkin-specific italic styles */
+        :root:not([data-theme="light"]) .ace_gherkin,
+        :root:not([data-theme="light"]) .ace_meta.ace_tag.ace_gherkin {
+          font-style: normal !important;
+        }
+        :root:not([data-theme="light"]) .ace_variable {
+          color: #ffa657 !important;
+          font-style: normal !important;
+        }
+        :root:not([data-theme="light"]) .ace_text,
+        :root:not([data-theme="light"]) .ace_identifier {
+          font-style: normal !important;
+        }
+      }
+
+      /* Environment Tab Styles */
+      .environment-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+      .environment-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-primary);
+      }
+      .section-header h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .env-file-tabs {
+        display: flex;
+        gap: 4px;
+      }
+      .env-file-tab {
+        padding: 6px 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--text-secondary);
+        transition: all 0.15s;
+      }
+      .env-file-tab:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+      .env-file-tab.active {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
+      }
+      .search-box {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-primary);
+      }
+      .search-box input {
+        width: 100%;
+      }
+      .env-vars-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+      }
+      .env-var-item {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        transition: background 0.15s;
+      }
+      .env-var-item:hover {
+        background: var(--bg-secondary);
+      }
+      .env-var-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .env-var-key {
+        font-weight: 600;
+        color: var(--accent-primary);
+        font-size: 13px;
+        font-family: ui-monospace, 'Cascadia Code', monospace;
+      }
+      .env-var-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .env-var-actions button {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+      .env-var-value {
+        font-family: ui-monospace, 'Cascadia Code', monospace;
+        font-size: 12px;
+        color: var(--text-primary);
+        word-break: break-all;
+        padding: 6px 8px;
+        background: var(--code-bg);
+        border-radius: 4px;
+        border: 1px solid var(--border-secondary);
+      }
+      .env-var-value.editing {
+        border-color: var(--accent-primary);
+      }
+      .env-var-value input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: inherit;
+        outline: none;
+      }
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-secondary);
+        text-align: center;
+        padding: 20px;
+      }
+      .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/ext-language_tools.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/theme-github.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/theme-github_dark.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/mode-gherkin.min.js"></script>
+    <script type="module" src="samples.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Gherkin Web Runner</h1>
+      <span class="badge" id="status">Idle</span>
+      <span class="badge" id="saveStatus" style="display:none; background: var(--status-ok); color: white;">Saved</span>
+      <span class="badge" id="reportStatus" style="display:none;">Report Server</span>
+      <select id="sampleSelect">
+        <option value="">-- Load Sample --</option>
+      </select>
+      <button class="btn secondary" id="formatBtn" title="Format Gherkin">Format</button>
+      <button class="btn" id="runBtn">Run</button>
+      <button class="btn secondary" id="reportBtn" title="Start/Stop Report Server">Report Server</button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <span id="themeIcon">🌙</span>
+      </button>
+    </header>
+    <div class="container">
+      <div class="pane">
+        <div class="section">
+          <div class="row" style="width:100%">
+            <input id="tags" type="text" placeholder="Optional tags (comma-separated)"></input>
+          </div>
+          <div class="row" style="width:100%; padding-top: 8px; gap: 16px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="clearAllureResults" style="cursor: pointer;">
+              <span>Clear allure results before run</span>
+            </label>
+            <label style="display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="createNewFolder" checked="false" style="cursor: pointer;">
+              <span>Create new folder for each run</span>
+            </label>
+          </div>
+        </div>
+        <div class="sample-info" id="sampleInfo" style="display:none;"></div>
+        <div class="editor-tabs" id="editorTabs">
+          <!-- Tabs will be dynamically inserted here -->
+        </div>
+        <div id="editor"></div>
+      </div>
+      <div class="pane">
+        <div class="tabs">
+          <div class="tab active" data-tab="network">Network</div>
+          <div class="tab" data-tab="logs">Live Logs</div>
+          <div class="tab" data-tab="environment">Environment</div>
+        </div>
+        <div class="tab-content active" id="tab-network">
+          <div class="network-split">
+            <div id="net"></div>
+            <div id="details"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="tab-logs">
+          <div id="logs"></div>
+        </div>
+        <div class="tab-content" id="tab-environment">
+          <div class="environment-container">
+            <div class="environment-section">
+              <div class="section-header">
+                <h3>Environment Variables</h3>
+                <div class="env-file-tabs">
+                  <button class="env-file-tab active" data-file=".env">.env</button>
+                  <button class="env-file-tab" data-file=".users.env">.users.env</button>
+                </div>
+                <button class="btn secondary" id="refreshEnvBtn">Refresh</button>
+              </div>
+              <div class="search-box">
+                <input type="text" id="envSearch" placeholder="Search variables..." />
+              </div>
+              <div id="envVars" class="env-vars-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const editor = ace.edit("editor");
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+
+      // Tab Management System
+      const TAB_STORAGE_KEY = 'gherkin_tabs';
+      const ACTIVE_TAB_KEY = 'gherkin_active_tab';
+      let tabs = [];
+      let activeTabId = null;
+      let tabCounter = 0;
+
+      // Theme management
+      function getStoredTheme() {
+        return localStorage.getItem('theme');
+      }
+
+      function setStoredTheme(theme) {
+        localStorage.setItem('theme', theme);
+      }
+
+      function getPreferredTheme() {
+        const storedTheme = getStoredTheme();
+        if (storedTheme) {
+          return storedTheme;
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      function setTheme(theme) {
+        if (theme === 'auto') {
+          document.documentElement.removeAttribute('data-theme');
+          const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          editor.setTheme(isDark ? "ace/theme/github_dark" : "ace/theme/github");
+          themeIcon.textContent = '🌓';
+        } else if (theme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          editor.setTheme("ace/theme/github_dark");
+          themeIcon.textContent = '🌙';
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          editor.setTheme("ace/theme/github");
+          themeIcon.textContent = '☀️';
+        }
+      }
+
+      function cycleTheme() {
+        const currentTheme = getStoredTheme() || 'auto';
+        let nextTheme;
+        if (currentTheme === 'auto' || currentTheme === 'light') {
+          nextTheme = 'dark';
+        } else if (currentTheme === 'dark') {
+          nextTheme = 'light';
+        }
+        setStoredTheme(nextTheme);
+        setTheme(nextTheme);
+      }
+
+      // Initialize theme
+      setTheme(getPreferredTheme());
+
+      // Theme toggle button
+      themeToggle.addEventListener('click', cycleTheme);
+
+      // Listen for system theme changes (only if theme is set to auto)
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!getStoredTheme() || getStoredTheme() === 'auto') {
+          setTheme('auto');
+        }
+      });
+
+      editor.session.setMode("ace/mode/gherkin");
+      editor.setOptions({
+        fontSize: "13px",
+        showPrintMargin: false,
+        wrap: true,
+        useWorker: false,
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: true,
+        enableSnippets: true
+      });
+
+      // Add top padding using renderer padding
+      editor.renderer.setScrollMargin(12, 0, 0, 0);
+
+      // Add keyboard shortcut: Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) to run tests
+      editor.commands.addCommand({
+        name: 'runTests',
+        bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
+        exec: function(editor) {
+          document.getElementById('runBtn').click();
+        },
+        readOnly: false
+      });
+
+      // Auto-save on content change with debounce
+      let saveTimeout = null;
+      editor.session.on('change', function() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+          if (activeTabId) {
+            saveCurrentTab();
+          }
+        }, 500); // Save after 500ms of inactivity
+      });
+
+      // Tab Management Functions
+      function loadTabsFromStorage() {
+        const stored = localStorage.getItem(TAB_STORAGE_KEY);
+        const activeId = localStorage.getItem(ACTIVE_TAB_KEY);
+
+        if (stored) {
+          try {
+            tabs = JSON.parse(stored);
+            if (tabs.length > 0) {
+              tabCounter = Math.max(...tabs.map(t => t.id)) + 1;
+            }
+          } catch (e) {
+            console.error('Failed to load tabs from storage:', e);
+            tabs = [];
+          }
+        }
+
+        // Create default tab if no tabs exist
+        if (tabs.length === 0) {
+          const tab = {
+            id: tabCounter++,
+            name: 'Untitled',
+            content: '',
+            tags: '',
+            createdAt: Date.now()
+          };
+          tabs.push(tab);
+          activeTabId = tab.id;
+          saveTabsToStorage();
+        } else {
+          // Restore the previously active tab
+          const storedActiveId = activeId ? parseInt(activeId) : null;
+          const validTab = tabs.find(t => t.id === storedActiveId);
+          activeTabId = validTab ? storedActiveId : tabs[0].id;
+        }
+
+        renderTabs();
+
+        // Load the active tab content
+        const activeTab = tabs.find(t => t.id === activeTabId);
+        if (activeTab) {
+          editor.setValue(activeTab.content || '', -1);
+          document.getElementById('tags').value = activeTab.tags || '';
+          document.getElementById('clearAllureResults').checked = activeTab.clearAllureResults || false;
+          document.getElementById('createNewFolder').checked = activeTab.createNewFolder || false;
+        }
+      }
+
+      function saveTabsToStorage() {
+        localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(tabs));
+        localStorage.setItem(ACTIVE_TAB_KEY, activeTabId);
+      }
+
+      function createTab(name = 'Untitled', content = '') {
+        const tab = {
+          id: tabCounter++,
+          name: name,
+          content: content,
+          tags: '',
+          clearAllureResults: false,
+          createNewFolder: false,
+          createdAt: Date.now()
+        };
+        tabs.push(tab);
+        activeTabId = tab.id;
+        saveTabsToStorage();
+        renderTabs();
+        switchToTab(tab.id);
+        return tab;
+      }
+
+      function deleteTab(tabId) {
+        const index = tabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+
+        // Don't allow deleting the last tab
+        if (tabs.length === 1) {
+          // Just clear the content instead
+          tabs[0].content = '';
+          tabs[0].name = 'Untitled';
+          saveTabsToStorage();
+          renderTabs();
+          switchToTab(tabs[0].id);
+          return;
+        }
+
+        tabs.splice(index, 1);
+
+        // Switch to another tab if deleting active tab
+        if (activeTabId === tabId) {
+          const newIndex = Math.min(index, tabs.length - 1);
+          activeTabId = tabs[newIndex].id;
+          switchToTab(activeTabId);
+        }
+
+        saveTabsToStorage();
+        renderTabs();
+      }
+
+      function renameTab(tabId, newName) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab) {
+          tab.name = newName || 'Untitled';
+          saveTabsToStorage();
+          renderTabs();
+        }
+      }
+
+      function saveCurrentTab() {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) {
+          tab.content = editor.getValue();
+          tab.tags = document.getElementById('tags').value;
+          tab.clearAllureResults = document.getElementById('clearAllureResults').checked;
+          tab.createNewFolder = document.getElementById('createNewFolder').checked;
+          tab.lastModified = Date.now();
+          saveTabsToStorage();
+          console.log(`Saved tab "${tab.name}" with ${tab.content.length} characters`);
+
+          // Show save indicator
+          const saveStatus = document.getElementById('saveStatus');
+          if (saveStatus) {
+            saveStatus.style.display = 'inline-block';
+            setTimeout(() => {
+              saveStatus.style.display = 'none';
+            }, 1500);
+          }
+        }
+      }
+
+      function switchToTab(tabId) {
+        // Only save if we're switching away from an existing tab
+        if (activeTabId && activeTabId !== tabId) {
+          saveCurrentTab();
+        }
+
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+
+        activeTabId = tabId;
+
+        // Set editor value without moving cursor
+        const currentContent = editor.getValue();
+        if (currentContent !== (tab.content || '')) {
+          editor.setValue(tab.content || '', -1);
+        }
+
+        document.getElementById('tags').value = tab.tags || '';
+        document.getElementById('clearAllureResults').checked = tab.clearAllureResults || false;
+        document.getElementById('createNewFolder').checked = tab.createNewFolder || false;
+
+        localStorage.setItem(ACTIVE_TAB_KEY, activeTabId);
+        renderTabs();
+      }
+
+      function renderTabs() {
+        const tabsContainer = document.getElementById('editorTabs');
+        tabsContainer.innerHTML = '';
+
+        tabs.forEach(tab => {
+          const tabEl = document.createElement('div');
+          tabEl.className = 'editor-tab' + (tab.id === activeTabId ? ' active' : '');
+
+          const nameEl = document.createElement('span');
+          nameEl.className = 'editor-tab-name';
+          nameEl.textContent = tab.name;
+          nameEl.title = `${tab.name}\nDouble-click or right-click to rename`;
+
+          // Function to start renaming
+          const startRename = () => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = tab.name;
+            input.className = 'editor-tab-name editing';
+            input.style.width = Math.max(80, nameEl.offsetWidth) + 'px';
+
+            input.addEventListener('blur', () => {
+              renameTab(tab.id, input.value);
+            });
+
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                input.blur();
+              } else if (e.key === 'Escape') {
+                renderTabs();
+              }
+            });
+
+            nameEl.replaceWith(input);
+            input.focus();
+            input.select();
+          };
+
+          // Double-click to rename
+          nameEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            startRename();
+          });
+
+          // Right-click context menu for rename
+          nameEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startRename();
+          });
+
+          const closeBtn = document.createElement('span');
+          closeBtn.className = 'editor-tab-close';
+          closeBtn.textContent = '×';
+          closeBtn.title = 'Close tab';
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteTab(tab.id);
+          });
+
+          tabEl.appendChild(nameEl);
+          tabEl.appendChild(closeBtn);
+
+          tabEl.addEventListener('click', () => {
+            switchToTab(tab.id);
+          });
+
+          tabsContainer.appendChild(tabEl);
+        });
+
+        // Add "+" button
+        const addBtn = document.createElement('div');
+        addBtn.className = 'editor-tab-add';
+        addBtn.textContent = '+';
+        addBtn.title = 'New tab (Ctrl+T)';
+        addBtn.addEventListener('click', () => {
+          createTab('Untitled');
+        });
+
+        tabsContainer.appendChild(addBtn);
+      }
+
+      // Keyboard shortcuts for tab management
+      document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + T: New tab
+        if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+          e.preventDefault();
+          createTab('Untitled');
+        }
+
+        // Ctrl/Cmd + W: Close tab
+        if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+          e.preventDefault();
+          if (activeTabId) {
+            deleteTab(activeTabId);
+          }
+        }
+
+        // Ctrl/Cmd + Tab: Next tab
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault();
+          const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+          const nextIndex = (currentIndex + 1) % tabs.length;
+          switchToTab(tabs[nextIndex].id);
+        }
+
+        // Ctrl/Cmd + Shift + Tab: Previous tab
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Tab' && e.shiftKey) {
+          e.preventDefault();
+          const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+          const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+          switchToTab(tabs[prevIndex].id);
+        }
+      });
+
+      // Save tabs before page unload
+      window.addEventListener('beforeunload', () => {
+        saveCurrentTab();
+      });
+
+      // Initialize tabs
+      loadTabsFromStorage();
+
+      // Force remove italic styling from Gherkin mode
+      editor.container.style.fontStyle = "normal";
+
+      // Add a style element to override Ace's internal styles
+      const styleOverride = document.createElement('style');
+      styleOverride.textContent = `
+        #editor .ace_line,
+        #editor .ace_line *,
+        #editor .ace_text-layer,
+        #editor .ace_text-layer * {
+          font-style: normal !important;
+        }
+        #editor .ace_comment,
+        #editor .ace_comment * {
+          font-style: italic !important;
+        }
+      `;
+      document.head.appendChild(styleOverride);
+
+      // Load Gherkin step autocomplete
+      import('./gherkin-steps.js').then(module => {
+        const { getStepCompletions } = module;
+        const langTools = ace.require("ace/ext/language_tools");
+
+        // Add custom completer for Gherkin steps
+        const gherkinCompleter = {
+          getCompletions: function(editor, session, pos, prefix, callback) {
+            const line = session.getLine(pos.row);
+            const beforeCursor = line.substring(0, pos.column);
+
+            // Only suggest completions after step keywords
+            if (/^\s*(Given|When|Then|And|\*)\s+/i.test(beforeCursor)) {
+              callback(null, getStepCompletions());
+            } else {
+              callback(null, []);
+            }
+          }
+        };
+
+        langTools.addCompleter(gherkinCompleter);
+      });
+
+      // Load samples
+      import('./samples.js').then(module => {
+        const { getAllSamples, getCategories } = module;
+        const samples = getAllSamples();
+        const categories = getCategories();
+        const sampleSelect = document.getElementById('sampleSelect');
+        const sampleInfo = document.getElementById('sampleInfo');
+
+        // Group samples by category
+        categories.forEach(category => {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = category;
+
+          const categorySamples = samples.filter(s => s.category === category);
+          categorySamples.forEach(sample => {
+            const option = document.createElement('option');
+            option.value = sample.id;
+            option.textContent = sample.name;
+            option.dataset.description = sample.description;
+            option.dataset.content = sample.content;
+            optgroup.appendChild(option);
+          });
+
+          sampleSelect.appendChild(optgroup);
+        });
+
+        // Handle sample selection
+        sampleSelect.addEventListener('change', (e) => {
+          const selectedOption = e.target.options[e.target.selectedIndex];
+          if (selectedOption.value) {
+            // Create a new tab with the sample content
+            const newTab = createTab(selectedOption.textContent, selectedOption.dataset.content);
+
+            // Show sample info
+            sampleInfo.textContent = `📘 ${selectedOption.textContent}: ${selectedOption.dataset.description}`;
+            sampleInfo.style.display = 'block';
+
+            // Reset the select dropdown
+            setTimeout(() => {
+              sampleSelect.value = '';
+            }, 100);
+          } else {
+            sampleInfo.style.display = 'none';
+          }
+        });
+      });
+
+      const statusEl = document.getElementById('status');
+      const logsEl = document.getElementById('logs');
+      const netEl = document.getElementById('net');
+      const detailsEl = document.getElementById('details');
+      const network = [];
+
+      // Tab switching functionality
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`tab-${tabName}`).classList.add('active');
+        });
+      });
+
+      function setStatus(txt) { statusEl.textContent = txt; }
+
+      // JSON syntax highlighting
+      function highlightJSON(json) {
+        if (typeof json !== 'string') {
+          json = JSON.stringify(json, null, 2);
+        }
+        return json
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+          .replace(/:\s*"([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+          .replace(/:\s*(-?\d+\.?\d*)/g, ': <span class="json-number">$1</span>')
+          .replace(/:\s*(true|false)/g, ': <span class="json-boolean">$1</span>')
+          .replace(/:\s*(null)/g, ': <span class="json-null">$1</span>');
+      }
+
+      // Create collapsible detail section
+      function createDetailSection(title, content, defaultExpanded = true, badge = null) {
+        const section = document.createElement('div');
+        section.className = 'detail-section';
+
+        const header = document.createElement('div');
+        header.className = 'detail-header';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'detail-header-title';
+        titleSpan.textContent = title;
+
+        const rightSide = document.createElement('div');
+        rightSide.style.display = 'flex';
+        rightSide.style.alignItems = 'center';
+        rightSide.style.gap = '8px';
+
+        if (badge) {
+          const badgeSpan = document.createElement('span');
+          badgeSpan.className = 'detail-header-badge';
+          badgeSpan.textContent = badge;
+          rightSide.appendChild(badgeSpan);
+        }
+
+        const icon = document.createElement('span');
+        icon.className = 'detail-collapse-icon' + (defaultExpanded ? '' : ' collapsed');
+        icon.textContent = '▼';
+        rightSide.appendChild(icon);
+
+        header.appendChild(titleSpan);
+        header.appendChild(rightSide);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'detail-content' + (defaultExpanded ? ' expanded' : '');
+        contentDiv.innerHTML = content;
+
+        header.onclick = () => {
+          contentDiv.classList.toggle('expanded');
+          icon.classList.toggle('collapsed');
+        };
+
+        section.appendChild(header);
+        section.appendChild(contentDiv);
+        return section;
+      }
+
+      // Show request details in the details panel
+      function showRequestDetails(req) {
+        detailsEl.innerHTML = '';
+
+        // Overview section
+        const overview = `
+          <div class="detail-row">
+            <span class="detail-label">Method:</span>
+            <span class="detail-value"><strong>${req.method}</strong></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">URL:</span>
+            <span class="detail-value">${req.url}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value status ${req.status >= 200 && req.status < 300 ? 'ok' : 'bad'}">${req.status} ${req.statusText || ''}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Duration:</span>
+            <span class="detail-value">${req.durationMs} ms</span>
+          </div>
+        `;
+        detailsEl.appendChild(createDetailSection('Overview', overview, true));
+
+        // Request Headers (expanded by default)
+        if (req.requestHeaders && Object.keys(req.requestHeaders).length > 0) {
+          const headersContent = '<div class="json-block">' + highlightJSON(req.requestHeaders) + '</div>';
+          detailsEl.appendChild(createDetailSection('Request Headers', headersContent, true, Object.keys(req.requestHeaders).length));
+        }
+
+        // Request Body (expanded if present)
+        if (req.requestBody) {
+          let bodyContent;
+          try {
+            const parsed = JSON.parse(req.requestBody);
+            bodyContent = '<div class="json-block">' + highlightJSON(parsed) + '</div>';
+          } catch {
+            bodyContent = '<div class="json-block">' + req.requestBody.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
+          }
+          detailsEl.appendChild(createDetailSection('Request Body', bodyContent, true));
+        }
+
+        // Response Headers (collapsed by default)
+        if (req.responseHeaders && Object.keys(req.responseHeaders).length > 0) {
+          const respHeadersContent = '<div class="json-block">' + highlightJSON(req.responseHeaders) + '</div>';
+          detailsEl.appendChild(createDetailSection('Response Headers', respHeadersContent, false, Object.keys(req.responseHeaders).length));
+        }
+
+        // Response Body (expanded by default)
+        if (req.responseBodyPreview) {
+          let respBodyContent;
+          try {
+            const parsed = JSON.parse(req.responseBodyPreview);
+            respBodyContent = '<div class="json-block">' + highlightJSON(parsed) + '</div>';
+          } catch {
+            respBodyContent = '<div class="json-block">' + req.responseBodyPreview.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
+          }
+          detailsEl.appendChild(createDetailSection('Response Body', respBodyContent, true));
+        }
+
+        // cURL Command (collapsed by default)
+        if (req.curl) {
+          const curlContent = `
+            <div class="curl-command">
+              <button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextSibling.textContent); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+              <div>${req.curl.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            </div>
+          `;
+          detailsEl.appendChild(createDetailSection('cURL Command', curlContent, false));
+        }
+      }
+
+      function shouldShowInLogs(line) {
+        // Filter out verbose httpcore/httpx/library debug logs from Live Logs tab
+        // But still return true so they get processed by extractCurl for Network tab
+
+        // Hide httpcore/httpx DEBUG logs
+        if (line.includes('DEBUG') && (
+            line.includes('httpcore') ||
+            line.includes('httpx') ||
+            line.includes('urllib3') ||
+            line.includes('asyncio')
+        )) {
+          return false;
+        }
+
+        // Hide WEBAPP_ prefixed lines (used for Network tab data)
+        if (line.startsWith('WEBAPP_NET ') || line.startsWith('WEBAPP_CURL ')) {
+          return false;
+        }
+
+        return true;
+      }
+
+      function appendLog(line) {
+        if (shouldShowInLogs(line)) {
+          logsEl.textContent += line;
+          logsEl.scrollTop = logsEl.scrollHeight;
+        }
+      }
+
+      function addCurl(cmd) { if (!detailsEl.textContent.includes(cmd)) detailsEl.textContent += (detailsEl.textContent?"\n\n":"") + cmd; }
+
+      function renderNetList() {
+        netEl.innerHTML = '';
+        for (const item of network) {
+          const row = document.createElement('div');
+          row.className = 'net-item';
+          const m = document.createElement('span'); m.className = 'method ' + (item.method||''); m.textContent = item.method;
+          const u = document.createElement('span'); u.className = 'url'; u.textContent = item.url;
+          const s = document.createElement('span'); s.className = 'status ' + ((item.status>=200&&item.status<300)?'ok':'bad'); s.textContent = item.status;
+          row.appendChild(m); row.appendChild(u); row.appendChild(s);
+          row.onclick = () => { showRequestDetails(item); };
+          netEl.prepend(row);
+        }
+      }
+
+      let nextIsCurl = false;
+      function extractCurl(line) {
+        // Heuristics for three sources of logs:
+        // 1) API client debug block: "Request URL:", "Request Headers:", etc
+        // 2) Domain prints: "Making METHOD request to:", "Headers:", "Body Args:"
+        // 3) Stable single-line cURL: "WEBAPP_CURL <curl ...>"
+        // Preferred: network JSON line from backend
+        if (line.startsWith('WEBAPP_NET ')) {
+          try {
+            const obj = JSON.parse(line.replace(/^WEBAPP_NET\s+/, ''));
+            network.push(obj);
+            renderNetList();
+          } catch (e) {}
+          return;
+        }
+
+        // Fallback: stable cURL line from backend
+        if (line.startsWith('WEBAPP_CURL ')) {
+          const cmd = line.replace(/^WEBAPP_CURL\s+/, '').trim();
+          if (cmd) addCurl(cmd);
+          return;
+        }
+        const m = line.match(/Request URL: (.*)/);
+        if (m) { window.__lastReq = { ...(window.__lastReq||{}), url: m[1].trim() }; }
+        const mh = line.match(/Request Headers: (\{.*\})/);
+        if (mh) { try { window.__lastReq = { ...(window.__lastReq||{}), headers: JSON.parse(mh[1]) }; } catch(e){} }
+        const mm = line.match(/Request Method: (\w+)/);
+        if (mm) { window.__lastReq = { ...(window.__lastReq||{}), method: mm[1].trim() }; }
+        const mb = line.match(/Request Body: ([\s\S]*)/);
+        if (mb) { window.__lastReq = { ...(window.__lastReq||{}), body: mb[1] }; }
+
+        // Domain print format
+        const md = line.match(/Making\s+(GET|POST|PUT|DELETE|PATCH|HEAD)\s+request\s+to:\s+(.*)/);
+        if (md) { window.__lastReq = { ...(window.__lastReq||{}), method: md[1], url: md[2].trim() }; }
+        const hd = line.match(/^\s*Headers:\s*(\{.*\})/);
+        if (hd) { try { window.__lastReq = { ...(window.__lastReq||{}), headers: JSON.parse(hd[1]) }; } catch(e){} }
+        const bd = line.match(/^\s*Body Args:\s*(.*)/);
+        if (bd) { window.__lastReq = { ...(window.__lastReq||{}), body: bd[1] }; }
+
+        // Domain debug() explicit cURL dump
+        if (line.includes('============CURL============')) { window.__captureNextCurl = true; }
+        else if (window.__captureNextCurl) { addCurl(line.trim()); window.__captureNextCurl = false; }
+
+        if (line.includes('Response Status:')) {
+          const r = window.__lastReq || null;
+          if (r && r.url && r.method) {
+            const h = r.headers || {};
+            const parts = [ 'curl', '-X', r.method, `'${r.url}'` ];
+            Object.entries(h).forEach(([k,v])=>{
+              // Avoid very long headers
+              if (String(v).length < 512) parts.push('-H', `'${k}: ${v}'`);
+            });
+            if (r.body && r.body.trim() && r.body.trim() !== 'None') {
+              parts.push('--data', `'${r.body.replace(/'/g, "'\\''").trim()}'`);
+            }
+            addCurl(parts.join(' '));
+          }
+          window.__lastReq = null;
+        }
+      }
+
+
+      // Format Gherkin content
+      document.getElementById('formatBtn').onclick = () => {
+        const content = editor.getValue();
+        const formatted = formatGherkin(content);
+        editor.setValue(formatted, -1);
+      };
+
+      function formatGherkin(content) {
+        const lines = content.split('\n');
+        const formatted = [];
+        let inDocstring = false;
+        let inDataTable = false;
+        let indent = '';
+
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          const trimmed = line.trim();
+
+          // Skip empty lines (but preserve them)
+          if (trimmed === '') {
+            formatted.push('');
+            continue;
+          }
+
+          // Handle docstrings (""")
+          if (trimmed === '"""') {
+            inDocstring = !inDocstring;
+            formatted.push(indent + '  """');
+            continue;
+          }
+
+          // Inside docstring - preserve formatting
+          if (inDocstring) {
+            formatted.push(indent + '  ' + line.trimEnd());
+            continue;
+          }
+
+          // Feature keyword
+          if (trimmed.startsWith('Feature:')) {
+            indent = '';
+            formatted.push('Feature: ' + trimmed.substring(8).trim());
+            continue;
+          }
+
+          // Scenario keywords
+          if (trimmed.match(/^(Scenario|Scenario Outline|Background):/)) {
+            indent = '  ';
+            const keyword = trimmed.split(':')[0];
+            const description = trimmed.substring(keyword.length + 1).trim();
+            formatted.push('');
+            formatted.push(indent + keyword + ': ' + description);
+            continue;
+          }
+
+          // Step keywords (Given, When, Then, And, But, *)
+          if (trimmed.match(/^(Given|When|Then|And|But|\*)\s/)) {
+            const match = trimmed.match(/^(Given|When|Then|And|But|\*)\s+(.+)/);
+            if (match) {
+              const keyword = match[1];
+              const step = match[2];
+
+              // Check if next line is a data table
+              const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+              if (nextLine.startsWith('|')) {
+                inDataTable = true;
+              }
+
+              formatted.push(indent + '  ' + keyword + ' ' + step);
+            }
+            continue;
+          }
+
+          // Data table rows
+          if (trimmed.startsWith('|')) {
+            // Split by | but keep track of empty cells
+            const parts = trimmed.split('|');
+            // Remove first and last elements if they're empty (from leading/trailing |)
+            if (parts[0] === '' || parts[0].trim() === '') parts.shift();
+            if (parts.length > 0 && (parts[parts.length - 1] === '' || parts[parts.length - 1].trim() === '')) parts.pop();
+
+            // Pad cells but preserve empty ones
+            const paddedCells = parts.map(cell => ' ' + cell.trim() + ' ');
+            formatted.push(indent + '    |' + paddedCells.join('|') + '|');
+
+            // Check if next line is not a table
+            const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+            if (!nextLine.startsWith('|')) {
+              inDataTable = false;
+            }
+            continue;
+          }
+
+          // Comments
+          if (trimmed.startsWith('#')) {
+            formatted.push(indent + '  ' + trimmed);
+            continue;
+          }
+
+          // Tags
+          if (trimmed.startsWith('@')) {
+            formatted.push(indent + trimmed);
+            continue;
+          }
+
+          // Examples keyword
+          if (trimmed.startsWith('Examples:')) {
+            formatted.push('');
+            formatted.push(indent + '  Examples:');
+            continue;
+          }
+
+          // Default: preserve with appropriate indent
+          if (indent) {
+            formatted.push(indent + '  ' + trimmed);
+          } else {
+            formatted.push(trimmed);
+          }
+        }
+
+        // Clean up multiple consecutive empty lines
+        const cleaned = [];
+        let prevEmpty = false;
+        for (const line of formatted) {
+          if (line === '') {
+            if (!prevEmpty) {
+              cleaned.push(line);
+            }
+            prevEmpty = true;
+          } else {
+            cleaned.push(line);
+            prevEmpty = false;
+          }
+        }
+
+        return cleaned.join('\n');
+      }
+
+      document.getElementById('runBtn').onclick = async () => {
+        // Save current test content before running
+        saveCurrentTab();
+
+        logsEl.textContent = ''; detailsEl.textContent = ''; netEl.innerHTML = ''; network.length = 0; setStatus('Preparing');
+
+        // Reload environment variables from .env files before running tests
+        try {
+          await fetch('/api/env/reload', { method: 'POST' });
+        } catch (err) {
+          console.warn('Failed to reload env vars:', err);
+        }
+
+        const feature = editor.getValue();
+        const tags = document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+        const clearAllureResults = document.getElementById('clearAllureResults').checked;
+        const createNewFolder = document.getElementById('createNewFolder').checked;
+        const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ feature, tags, clear_allure_results: clearAllureResults, create_new_folder: createNewFolder }) });
+        const data = await res.json();
+        if (!data.run_id) { setStatus('Error'); appendLog(JSON.stringify(data)); return; }
+        setStatus('Running');
+        const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${wsProto}://${location.host}/ws/logs?run_id=${data.run_id}`);
+        ws.onmessage = (ev) => {
+          extractCurl(ev.data);  // Process network data FIRST
+          appendLog(ev.data);     // Then filter/display in logs
+        };
+        ws.onclose = () => { setStatus('Finished'); };
+        ws.onerror = () => { setStatus('Error'); };
+      };
+
+      // Environment Tab Functionality
+      const envVarsEl = document.getElementById('envVars');
+      const envSearchEl = document.getElementById('envSearch');
+      const refreshEnvBtn = document.getElementById('refreshEnvBtn');
+
+      let allEnvFiles = {};  // { ".env": {...}, ".users.env": {...} }
+      let currentEnvFile = '.env';
+      let filteredEnvVars = {};
+
+      // Load environment variables
+      async function loadEnvVars() {
+        try {
+          const res = await fetch('/api/env');
+          const data = await res.json();
+          allEnvFiles = data.files || {};
+          applyEnvSearch();
+        } catch (err) {
+          console.error('Failed to load env vars:', err);
+          envVarsEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Failed to load environment variables</p></div>';
+        }
+      }
+
+      // Apply search filter to env vars
+      function applyEnvSearch() {
+        const searchTerm = envSearchEl.value.toLowerCase();
+        filteredEnvVars = {};
+
+        const currentFileVars = allEnvFiles[currentEnvFile] || {};
+        for (const [key, value] of Object.entries(currentFileVars)) {
+          if (key.toLowerCase().includes(searchTerm) || String(value).toLowerCase().includes(searchTerm)) {
+            filteredEnvVars[key] = value;
+          }
+        }
+
+        renderEnvVars();
+      }
+
+      // Render environment variables
+      function renderEnvVars() {
+        envVarsEl.innerHTML = '';
+
+        const entries = Object.entries(filteredEnvVars);
+        if (entries.length === 0) {
+          envVarsEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No variables found</p></div>';
+          return;
+        }
+
+        // Sort by key name
+        entries.sort((a, b) => a[0].localeCompare(b[0]));
+
+        for (const [key, value] of entries) {
+          const item = document.createElement('div');
+          item.className = 'env-var-item';
+          item.dataset.key = key;
+
+          const header = document.createElement('div');
+          header.className = 'env-var-header';
+
+          const keySpan = document.createElement('span');
+          keySpan.className = 'env-var-key';
+          keySpan.textContent = key;
+
+          const actions = document.createElement('div');
+          actions.className = 'env-var-actions';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn secondary';
+          editBtn.textContent = 'Edit';
+          editBtn.onclick = () => editEnvVar(key, item);
+
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'btn secondary';
+          copyBtn.textContent = 'Copy';
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(String(value));
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+          };
+
+          actions.appendChild(editBtn);
+          actions.appendChild(copyBtn);
+          header.appendChild(keySpan);
+          header.appendChild(actions);
+
+          const valueDiv = document.createElement('div');
+          valueDiv.className = 'env-var-value';
+          valueDiv.textContent = String(value);
+
+          item.appendChild(header);
+          item.appendChild(valueDiv);
+          envVarsEl.appendChild(item);
+        }
+      }
+
+      // Edit environment variable
+      function editEnvVar(key, itemEl) {
+        const valueDiv = itemEl.querySelector('.env-var-value');
+        const currentValue = allEnvFiles[currentEnvFile][key];
+
+        valueDiv.classList.add('editing');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = String(currentValue);
+        valueDiv.textContent = '';
+        valueDiv.appendChild(input);
+        input.focus();
+        input.select();
+
+        const saveEdit = async () => {
+          const newValue = input.value;
+          try {
+            const res = await fetch('/api/env', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key, value: newValue, file: currentEnvFile })
+            });
+            const data = await res.json();
+            if (data.success) {
+              allEnvFiles[currentEnvFile][key] = newValue;
+              filteredEnvVars[key] = newValue;
+              valueDiv.classList.remove('editing');
+              valueDiv.textContent = newValue;
+            }
+          } catch (err) {
+            console.error('Failed to update env var:', err);
+            valueDiv.classList.remove('editing');
+            valueDiv.textContent = String(currentValue);
+          }
+        };
+
+        const cancelEdit = () => {
+          valueDiv.classList.remove('editing');
+          valueDiv.textContent = String(currentValue);
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') saveEdit();
+          if (e.key === 'Escape') cancelEdit();
+        });
+      }
+
+      // Event listeners
+      envSearchEl.addEventListener('input', applyEnvSearch);
+      refreshEnvBtn.addEventListener('click', loadEnvVars);
+
+      // File tab switching
+      document.querySelectorAll('.env-file-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active tab
+          document.querySelectorAll('.env-file-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          // Switch file
+          currentEnvFile = tab.dataset.file;
+          applyEnvSearch();
+        });
+      });
+
+      // Load env vars when Environment tab becomes active
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+          if (tabName === 'environment') {
+            loadEnvVars();
+          }
+        });
+      });
+
+      // Report Server Management
+      const reportBtn = document.getElementById('reportBtn');
+      const reportStatus = document.getElementById('reportStatus');
+      let reportServerRunning = false;
+
+      // Check initial report server status
+      async function checkReportServerStatus() {
+        try {
+          const res = await fetch('/api/report/status');
+          const data = await res.json();
+          reportServerRunning = data.running;
+          updateReportButton();
+        } catch (err) {
+          console.error('Failed to check report server status:', err);
+        }
+      }
+
+      // Update report button appearance
+      function updateReportButton() {
+        if (reportServerRunning) {
+          reportBtn.textContent = 'Stop Report Server';
+          reportBtn.classList.remove('secondary');
+          reportBtn.classList.add('btn');
+          reportStatus.style.display = 'inline-block';
+          reportStatus.textContent = 'Report Server Running';
+          reportStatus.style.background = 'var(--status-ok)';
+          reportStatus.style.color = 'white';
+        } else {
+          reportBtn.textContent = 'Start Report Server';
+          reportBtn.classList.add('secondary');
+          reportBtn.classList.remove('btn');
+          reportStatus.style.display = 'none';
+        }
+      }
+
+      // Start report server
+      async function startReportServer() {
+        try {
+          reportBtn.disabled = true;
+          reportBtn.textContent = 'Starting...';
+          const res = await fetch('/api/report/start', { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            reportServerRunning = true;
+            updateReportButton();
+            appendLog('\n=== Report server started ===\n');
+          } else {
+            appendLog(`\n=== Failed to start report server: ${data.message} ===\n`);
+          }
+        } catch (err) {
+          console.error('Failed to start report server:', err);
+          appendLog(`\n=== Error starting report server: ${err.message} ===\n`);
+        } finally {
+          reportBtn.disabled = false;
+        }
+      }
+
+      // Stop report server
+      async function stopReportServer() {
+        try {
+          reportBtn.disabled = true;
+          reportBtn.textContent = 'Stopping...';
+          const res = await fetch('/api/report/stop', { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            reportServerRunning = false;
+            updateReportButton();
+            appendLog('\n=== Report server stopped ===\n');
+          } else {
+            appendLog(`\n=== Failed to stop report server: ${data.message} ===\n`);
+          }
+        } catch (err) {
+          console.error('Failed to stop report server:', err);
+          appendLog(`\n=== Error stopping report server: ${err.message} ===\n`);
+        } finally {
+          reportBtn.disabled = false;
+        }
+      }
+
+      // Report button click handler
+      reportBtn.addEventListener('click', async () => {
+        if (reportServerRunning) {
+          await stopReportServer();
+        } else {
+          await startReportServer();
+        }
+      });
+
+      // Check status on load
+      checkReportServerStatus();
+
+      // Poll report server status every 10 seconds
+      setInterval(checkReportServerStatus, 10000);
+    </script>
+  </body>
+</html>
