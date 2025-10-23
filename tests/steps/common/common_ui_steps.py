@@ -282,6 +282,14 @@ def wait_for_network_idle(page: Page):
   page.wait_for_load_state("networkidle")
 
 
+@step("the user waits for {int} seconds")
+@step(parsers.parse("the user waits for {timeout:d} seconds"))
+def wait_for_timeout_seconds(page: Page, timeout):
+  """Waits for a specified number of seconds."""
+  print(f"Waiting for {timeout} seconds")
+  page.wait_for_timeout(timeout * 1000)
+
+
 @step("the element {string} should be visible")
 @step(parsers.parse('the element "{selector_template}" should be visible'))
 def assert_element_visible(page: Page, ctx, selector_template):
@@ -306,6 +314,19 @@ def assert_element_hidden(page: Page, ctx, selector_template):
   resolved_selector = domain.resolve_variable(selector_template)
   print(f"Asserting hidden: {resolved_selector}")
   v(page.locator(resolved_selector)).locator().to_be_hidden()
+
+
+@step("the element {string} should not be visible")
+@step(parsers.parse('the element "{selector_template}" should not be visible'))
+def assert_element_not_visible(page: Page, ctx, selector_template):
+  """Asserts that an element is not visible."""
+  from src.domains.common.common_api_domain import CommonApiDomain
+
+  domain = CommonApiDomain(ctx, {})
+
+  resolved_selector = domain.resolve_variable(selector_template)
+  print(f"Asserting not visible: {resolved_selector}")
+  v(page.locator(resolved_selector)).locator().not_to_be_visible()
 
 
 @step("the element {string} should contain text {string}")
@@ -439,6 +460,19 @@ def assert_url_contains(page: Page, ctx, url_part_template):
   resolved_url_part = domain.resolve_variable(url_part_template)
   print(f"Asserting URL contains: {resolved_url_part}")
   v(page).locator().to_have_url(lambda url: resolved_url_part in url)
+
+
+@step("the user should be on {string}")
+@step(parsers.parse('the user should be on "{url_template}"'))
+def assert_current_url(page: Page, ctx, url_template):
+  """Asserts that the current page URL matches the expected URL."""
+  from src.domains.common.common_api_domain import CommonApiDomain
+
+  domain = CommonApiDomain(ctx, {})
+
+  resolved_url = domain.resolve_variable(url_template)
+  print(f"Asserting current URL is: {resolved_url}")
+  v(page).locator().to_have_url(resolved_url)
 
 
 @step("the user scrolls to {string}")
