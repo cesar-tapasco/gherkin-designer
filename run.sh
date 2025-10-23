@@ -4,7 +4,7 @@ set -e
 # Configuration
 REPO_URL="https://github.com/cesar-tapasco/gherkin-designer/releases/download/1.0/gherkin-designer.zip"
 DOWNLOAD_DIR="/tmp/gherkin-designer-download"
-INSTALL_DIR="$HOME/gherkin-designer"
+INSTALL_DIR="$PWD/gherkin-designer"
 
 echo "🚀 Gherkin Designer Installer"
 echo ""
