@@ -72,4 +72,5 @@ echo "🚀 Starting Gherkin Designer..."
 echo ""
 
 # Start the web runner
-python cli.py start-web-runner --port 9000
+echo "$PWD/.venv/bin/python"
+$PWD/.venv/bin/python cli.py start-web-runner --port 9000
