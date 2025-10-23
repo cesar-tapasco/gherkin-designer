@@ -840,7 +840,7 @@ class CommonApiDomain(DomainBase):
 
     # jq returns native Python types, so direct comparison usually works well.
     return (
-      actual_value == expected_value,
+      str(actual_value) == str(expected_value),
       f"jq filter '{jq_filter}': Expected '{expected_value}' (type {type(expected_value)}), "
       f"but got '{actual_value}' (type {type(actual_value)})."
       f"\n(Resolved expected value template was: '{resolved_expected_value_str}')"

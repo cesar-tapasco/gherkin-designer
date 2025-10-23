@@ -282,7 +282,6 @@ def check_response_code_ok(api_context):
 def check_status_code(api_context, code):
   """Checks if the response status code matches the expected value."""
   response = api_context.get("response")
-  v(response, "No request was made (response is None)").is_not_empty()
   v(
     response.status_code == code,
     f"Expected status {code}, but got {response.status_code}. Response: {response.text[:500]}",
@@ -299,8 +298,6 @@ def check_response_header(
   # Resolve expected header name and value using variables
   resolved_name = api_domain.resolve_variable(name_template)
   resolved_expected_value = api_domain.resolve_variable(expected_value_template)
-
-  v(response, "No request was made").is_not_empty()
 
   # Header names are case-insensitive according to HTTP spec
   actual_value = response.headers.get(resolved_name)
@@ -324,6 +321,18 @@ def check_response_json_path(
     api_context, expected_value_template, jq_filter
   )
   v(assertion_result, message).is_true()
+
+
+@step("the res jq {string} should not be {string}")
+@step(parsers.parse('the res jq "{jq_filter}" should not be "{expected_value_template}"'))
+def check_response_json_path_not(
+  api_context, api_domain: CommonApiDomain, jq_filter, expected_value_template
+):
+  """Checks if the result of a jq filter on the response JSON does NOT match the expected value."""
+  assertion_result, message = api_domain.resolve_actual_expected_value(
+    api_context, expected_value_template, jq_filter
+  )
+  v(not assertion_result, f"Expected value NOT to be '{expected_value_template}', but it was. {message}").is_true()
 
 
 @step(
@@ -1083,7 +1092,6 @@ def check_element_contains_value(ctx, api_domain: CommonApiDomain, element_name,
 @step(parsers.parse('the response should contain the value "{element_value}"'))
 def check_response_contains_value(api_context, api_domain: CommonApiDomain, element_value):
   response = api_context.get("response")
-  v(response, "No response found in API context").is_not_empty()
   resolved_value = api_domain.resolve_variable(element_value)
   v(response.text, "Response").contains(resolved_value)
 
