@@ -61,6 +61,7 @@ UV_VENV_CLEAR=1 uv venv
 export PATH="$PWD/.venv/bin:$PATH"
 uv pip install -r requirements.txt
 
+
 # Install playwright browsers
 echo "🌐 Installing Playwright browsers..."
 playwright install
@@ -72,5 +73,5 @@ echo "🚀 Starting Gherkin Designer..."
 echo ""
 
 # Start the web runner
-echo "$PWD/.venv/bin/python"
+uv pip install typer
 $PWD/.venv/bin/python cli.py start-web-runner --port 9000
