@@ -30,22 +30,17 @@ else
     exit 1
 fi
 
-# Extract the ZIP file
+# Extract the ZIP file into a subdirectory
 echo "📦 Extracting files..."
-unzip -q gherkin-designer.zip
-
-# Find the extracted directory (usually repo-name-branch)
-EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "gherkin-designer-*" | head -n 1)
-
-if [ -z "$EXTRACTED_DIR" ]; then
-    echo "❌ Failed to find extracted directory"
-    exit 1
-fi
+mkdir -p extracted
+cd extracted
+unzip -q -o ../gherkin-designer.zip
 
 # Move to installation directory
 echo "📂 Installing to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
-cp -r "$EXTRACTED_DIR"/* "$INSTALL_DIR/"
+# Copy all files except __MACOSX metadata
+find . -maxdepth 1 ! -name "." ! -name "__MACOSX" -exec cp -r {} "$INSTALL_DIR/" \;
 cd "$INSTALL_DIR"
 
 # Clean up temporary files
